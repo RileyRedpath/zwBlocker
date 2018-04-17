@@ -4,7 +4,7 @@ let walker = document.createTreeWalker(
                 document,
                 NodeFilter.SHOW_TEXT,
                 { acceptNode:
-                  function(node) {
+                  function(node) {  
                     if(testForZeroWidthCharacters(node.nodeValue)){
                       totalCount++;
                       return NodeFilter.FILTER_ACCEPT;
@@ -19,20 +19,20 @@ let walker = document.createTreeWalker(
 while(walker.nextNode());
 
 //send message to background page to update the badge text
-chrome.runtime.sendMessage({message: "updateBadgeNumber", value:totalCount}, function(response) {
+browser.runtime.sendMessage({message: "updateBadgeNumber", value:totalCount}, function(response) {
 });
 
 //catch selected text and send message to background page
 document.onselectionchange = function() {
   var selection = document.getSelection();
   if(testForZeroWidthCharacters(selection.toString())){
-    chrome.storage.sync.set({
+    browser.storage.local.set({
       selectedText: selection.toString(),
       selectedTextClean:removeZeroWidthCharacters(selection.toString()),
       selectedTextEmoji:replaceZeroWidthCharacters(selection.toString()),
     },function(){});
     /* show message*/
-    chrome.runtime.sendMessage({message: "warnUserOfZeroWidthChars", value:selection.toString()}, function(response) {
+    browser.runtime.sendMessage({message: "warnUserOfZeroWidthChars", value:selection.toString()}, function(response) {
     });
   }
 };
