@@ -1,5 +1,5 @@
 function restore_options() {
-  chrome.storage.sync.get(['selectedText','selectedTextClean','selectedTextEmoji'], function(data) {
+  browser.storage.local.get(['selectedText','selectedTextClean','selectedTextEmoji'], function(data) {
     //$('.selected').val(data.selectedText);
     $('.selected-clean').text(data.selectedTextClean);
     $('.selected-emoji').text(data.selectedTextEmoji);

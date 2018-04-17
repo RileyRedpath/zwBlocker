@@ -11,8 +11,7 @@
     "default_title": "Find zero-width characters."
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "scripts": ["background.js"]
   },
   "content_scripts": [
    {

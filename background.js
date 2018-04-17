@@ -1,56 +1,48 @@
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    if(request.message === "updateBadgeNumber"){
-      //this isn't setting the text for each tab id...
-      if(request.value<100){
-        chrome.browserAction.setBadgeText({"text": request.value.toString(), "tabId":sender.tab.id});
-      }else{
-        chrome.browserAction.setBadgeText({"text": "99+", "tabId":sender.tab.id});
-      }
-    }
-    if(request.message === "warnUserOfZeroWidthChars"){
-      chrome.notifications.create("zwBlockerWarningNotification", {
-        type:"basic",
-        iconUrl:"logo.png",
-        title:"zwBlocker Warning!",
-        message:"A zero-width character has been detected.",
-        priority:2,
-        buttons:[
-          {
-            title:"Get safe version"
-          }
-        ],
-        requireInteraction:true
-      });
-    }
-    if (request.message == "listeners"){
-      /*//add event handler for button click
-      chrome.tabs.executeScript(null, {file: "injectedScript.js"});
+browser.runtime.onMessage.addListener(onMessage);
 
-      //Google analytics
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-107206749-1']);
-      _gaq.push(['_trackEvent', 'squishing tweet', 'squished']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = 'https://ssl.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-      // end google analytics
-
-      sendResponse({message: "OK"});*/
-    }
-  }
-);
-chrome.notifications.onButtonClicked.addListener(function(notification, button){
-  if(button==0){
+browser.notifications.onClicked.addListener(function(notificationId){
+  if(notificationId==="zwBlockerWarningNotification"){
     //show with emojis
-    chrome.tabs.create({ url: 'tabUI.html' },function(tabs){
-    });
-  }else if(button==1){
+    browser.tabs.create({ url: 'tabUI.html' },function(tabs){
+    }); 
+  }/*else if(button==1){
     //show safe version
-    chrome.runtime.sendMessage({message: "showSelectionSafe"}, function(response) {
+    browser.runtime.sendMessage({message: "showSelectionSafe"}, function(response) {
     });
-  }
+  }*/
 });
+
+//Firefox can't handle creating too many notifications in a short period of time,
+//so I've delayed the creation of the notification and cancel it if there is another selection change
+//within a period of time (not sure exactly how short I could make that period)
+var queuedNotification;
+
+function onMessage(request, sender, sendResponse) {
+  console.log("request recieved: " + request.message);
+  if(request.message === "updateBadgeNumber"){
+    //this isn't setting the text for each tab id...
+    if(request.value<100){
+      browser.browserAction.setBadgeText({"text": request.value.toString(), "tabId":sender.tab.id});
+    }else{
+      browser.browserAction.setBadgeText({"text": "99+", "tabId":sender.tab.id});
+    }
+  }
+  else if(request.message === "warnUserOfZeroWidthChars"){
+    if(queuedNotification){
+      clearTimeout(queuedNotification);
+    }
+    queuedNotification = setTimeout(createNotification, 50);
+  }
+}
+
+function createNotification(){
+  console.log("creating notification");
+  browser.notifications.create("zwBlockerWarningNotification", {
+    type:"basic",
+    iconUrl:browser.extension.getURL("logo.png"),
+    title:"zwBlocker Warning!",
+    message:"A zero-width character has been detected. Show safe version?",
+    priority:2,
+  });
+  console.log("created notification");
+}
